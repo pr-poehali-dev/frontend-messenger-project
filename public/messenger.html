@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мессенджер</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #111827;
+            color: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .messenger {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Боковая панель */
+        .sidebar {
+            width: 320px;
+            background-color: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-profile {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .avatar.large {
+            width: 48px;
+            height: 48px;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background-color: #10b981;
+            border: 2px solid #1e293b;
+            border-radius: 50%;
+        }
+
+        .user-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f8fafc;
+        }
+
+        .user-info p {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .search-container {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 16px;
+            background-color: #334155;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .search-box::placeholder {
+            color: #94a3b8;
+        }
+
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .chat-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        .chat-item:hover {
+            background-color: #334155;
+        }
+
+        .chat-item.active {
+            background-color: #3b82f6;
+        }
+
+        .chat-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .chat-name {
+            font-weight: 600;
+            color: #f8fafc;
+            font-size: 14px;
+        }
+
+        .chat-time {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-left: auto;
+        }
+
+        .chat-message {
+            font-size: 13px;
+            color: #94a3b8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .online-status {
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .unread-count {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        /* Главная область */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header-main {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+            background-color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-header-main .user-info h3 {
+            font-size: 18px;
+        }
+
+        .chat-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px;
+            background-color: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #111827;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+            gap: 12px;
+        }
+
+        .message.own {
+            flex-direction: row-reverse;
+        }
+
+        .message.own .message-bubble {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border-radius: 18px;
+            position: relative;
+        }
+
+        .message-text {
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .message.own .message-time {
+            color: #cbd5e1;
+        }
+
+        .message-input-container {
+            padding: 20px;
+            border-top: 1px solid #334155;
+            background-color: #1e293b;
+        }
+
+        .message-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            background-color: #334155;
+            border: 1px solid #475569;
+            border-radius: 24px;
+            color: #f8fafc;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+        }
+
+        .message-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .message-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .send-btn {
+            padding: 12px 16px;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 24px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #94a3b8;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #f8fafc;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        /* Скроллбар */
+        .chats-list::-webkit-scrollbar,
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chats-list::-webkit-scrollbar-track,
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chats-list::-webkit-scrollbar-thumb,
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+
+        .chats-list::-webkit-scrollbar-thumb:hover,
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: absolute;
+                z-index: 10;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="messenger">
+        <div class="sidebar">
+            <div class="user-profile">
+                <div class="avatar large">
+                    <span>Я</span>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="user-info">
+                    <h3>Ваш профиль</h3>
+                    <p>В сети</p>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" class="search-box" placeholder="Поиск чатов..." id="searchInput">
+            </div>
+
+            <div class="chats-list" id="chatsList">
+                <div class="chat-item active" data-chat-id="1">
+                    <div class="avatar">
+                        <span>АС</span>
+                        <div class="online-indicator"></div>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-header">
+                            <div class="chat-name">Анна Смирнова</div>
+                            <div class="chat-time">14:30</div>
+                        </div>
+                        <div class="chat-message">Привет! Как дела?</div>
+                        <div class="chat-meta">
+                            <div class="online-status">В сети</div>
+                            <div class="unread-count">2</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-item" data-chat-id="2">
+                    <div class="avatar">
+                        <span>ДП</span>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-header">
+                            <div class="chat-name">Дмитрий Петров</div>
+                            <div class="chat-time">13:45</div>
+                        </div>
+                        <div class="chat-message">Отлично, спасибо за помощь!</div>
+                        <div class="chat-meta">
+                            <div class="online-status">2 минуты назад</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-item" data-chat-id="3">
+                    <div class="avatar">
+                        <span>ЕК</span>
+                        <div class="online-indicator"></div>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-header">
+                            <div class="chat-name">Елена Кузнецова</div>
+                            <div class="chat-time">12:20</div>
+                        </div>
+                        <div class="chat-message">Увидимся завтра на встрече</div>
+                        <div class="chat-meta">
+                            <div class="online-status">В сети</div>
+                            <div class="unread-count">1</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-item" data-chat-id="4">
+                    <div class="avatar">
+                        <span>МИ</span>
+                    </div>
+                    <div class="chat-info">
+                        <div class="chat-header">
+                            <div class="chat-name">Максим Иванов</div>
+                            <div class="chat-time">11:15</div>
+                        </div>
+                        <div class="chat-message">Проект готов к презентации</div>
+                        <div class="chat-meta">
+                            <div class="online-status">30 минут назад</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="chat-header-main" id="chatHeader">
+                <div class="avatar">
+                    <span>АС</span>
+                    <div class="online-indicator"></div>
+                </div>
+                <div class="user-info">
+                    <h3>Анна Смирнова</h3>
+                    <p>В сети</p>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" title="Звонок">📞</button>
+                    <button class="action-btn" title="Видеозвонок">📹</button>
+                    <button class="action-btn" title="Меню">⋮</button>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="message">
+                    <div class="avatar">
+                        <span>АС</span>
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-text">Привет! Как дела?</div>
+                        <div class="message-time">14:28</div>
+                    </div>
+                </div>
+
+                <div class="message own">
+                    <div class="message-bubble">
+                        <div class="message-text">Привет! Всё отлично, работаю над новым проектом</div>
+                        <div class="message-time">14:29</div>
+                    </div>
+                </div>
+
+                <div class="message">
+                    <div class="avatar">
+                        <span>АС</span>
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-text">Звучит интересно! Расскажешь подробнее?</div>
+                        <div class="message-time">14:30</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-input-container">
+                <div class="message-input-wrapper">
+                    <input type="text" class="message-input" placeholder="Напишите сообщение..." id="messageInput">
+                    <button class="send-btn" id="sendBtn">Отправить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные пользователей
+        const users = {
+            1: { name: 'Анна Смирнова', initials: 'АС', online: true },
+            2: { name: 'Дмитрий Петров', initials: 'ДП', online: false, lastSeen: '2 минуты назад' },
+            3: { name: 'Елена Кузнецова', initials: 'ЕК', online: true },
+            4: { name: 'Максим Иванов', initials: 'МИ', online: false, lastSeen: '30 минут назад' }
+        };
+
+        // Данные сообщений
+        const messages = {
+            1: [
+                { id: 1, sender: 'other', text: 'Привет! Как дела?', time: '14:28' },
+                { id: 2, sender: 'me', text: 'Привет! Всё отлично, работаю над новым проектом', time: '14:29' },
+                { id: 3, sender: 'other', text: 'Звучит интересно! Расскажешь подробнее?', time: '14:30' }
+            ],
+            2: [
+                { id: 1, sender: 'me', text: 'Спасибо за помощь с проектом!', time: '13:44' },
+                { id: 2, sender: 'other', text: 'Отлично, спасибо за помощь!', time: '13:45' }
+            ],
+            3: [
+                { id: 1, sender: 'other', text: 'Не забудь про встречу завтра', time: '12:19' },
+                { id: 2, sender: 'other', text: 'Увидимся завтра на встрече', time: '12:20' }
+            ],
+            4: [
+                { id: 1, sender: 'other', text: 'Проект готов к презентации', time: '11:15' },
+                { id: 2, sender: 'me', text: 'Отлично! Когда показываем?', time: '11:16' }
+            ]
+        };
+
+        let currentChatId = 1;
+
+        // Элементы
+        const chatItems = document.querySelectorAll('.chat-item');
+        const chatHeader = document.getElementById('chatHeader');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const searchInput = document.getElementById('searchInput');
+
+        // Переключение чатов
+        chatItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const chatId = parseInt(item.dataset.chatId);
+                switchChat(chatId);
+            });
+        });
+
+        // Функция переключения чата
+        function switchChat(chatId) {
+            currentChatId = chatId;
+            
+            // Обновляем активный чат
+            chatItems.forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.chatId) === chatId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Обновляем заголовок чата
+            updateChatHeader(chatId);
+            
+            // Обновляем сообщения
+            updateMessages(chatId);
+        }
+
+        // Обновление заголовка чата
+        function updateChatHeader(chatId) {
+            const user = users[chatId];
+            const onlineIndicator = user.online ? '<div class="online-indicator"></div>' : '';
+            const status = user.online ? 'В сети' : user.lastSeen;
+            
+            chatHeader.innerHTML = `
+                <div class="avatar">
+                    <span>${user.initials}</span>
+                    ${onlineIndicator}
+                </div>
+                <div class="user-info">
+                    <h3>${user.name}</h3>
+                    <p>${status}</p>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" title="Звонок">📞</button>
+                    <button class="action-btn" title="Видеозвонок">📹</button>
+                    <button class="action-btn" title="Меню">⋮</button>
+                </div>
+            `;
+        }
+
+        // Обновление сообщений
+        function updateMessages(chatId) {
+            const chatMessages = messages[chatId] || [];
+            const user = users[chatId];
+            
+            messagesContainer.innerHTML = chatMessages.map(msg => {
+                const isOwn = msg.sender === 'me';
+                return `
+                    <div class="message ${isOwn ? 'own' : ''}">
+                        ${!isOwn ? `
+                            <div class="avatar">
+                                <span>${user.initials}</span>
+                            </div>
+                        ` : ''}
+                        <div class="message-bubble">
+                            <div class="message-text">${msg.text}</div>
+                            <div class="message-time">${msg.time}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Прокрутка к низу
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Отправка сообщения
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            const now = new Date();
+            const time = now.getHours().toString().padStart(2, '0') + ':' + 
+                        now.getMinutes().toString().padStart(2, '0');
+            
+            const newMessage = {
+                id: Date.now(),
+                sender: 'me',
+                text: text,
+                time: time
+            };
+            
+            if (!messages[currentChatId]) {
+                messages[currentChatId] = [];
+            }
+            
+            messages[currentChatId].push(newMessage);
+            updateMessages(currentChatId);
+            
+            messageInput.value = '';
+            
+            // Обновляем превью сообщения в списке чатов
+            updateChatPreview(currentChatId, text, time);
+        }
+
+        // Обновление превью сообщения в списке чатов
+        function updateChatPreview(chatId, text, time) {
+            const chatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+            if (chatItem) {
+                const messageElement = chatItem.querySelector('.chat-message');
+                const timeElement = chatItem.querySelector('.chat-time');
+                
+                if (messageElement) messageElement.textContent = text;
+                if (timeElement) timeElement.textContent = time;
+            }
+        }
+
+        // События
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Поиск чатов
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            chatItems.forEach(item => {
+                const name = item.querySelector('.chat-name').textContent.toLowerCase();
+                if (name.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Обновление времени онлайн
+        function updateOnlineStatus() {
+            const now = new Date();
+            const timeString = now.getHours().toString().padStart(2, '0') + ':' + 
+                             now.getMinutes().toString().padStart(2, '0');
+            
+            // Обновляем время в профиле пользователя
+            const userProfile = document.querySelector('.user-profile .user-info p');
+            if (userProfile) {
+                userProfile.textContent = 'В сети';
+            }
+        }
+
+        // Обновляем статус каждую минуту
+        setInterval(updateOnlineStatus, 60000);
+        
+        // Инициализация
+        updateChatHeader(currentChatId);
+        updateMessages(currentChatId);
+        updateOnlineStatus();
+    </script>
+</body>
+</html>
